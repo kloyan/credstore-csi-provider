@@ -1,0 +1,72 @@
+kind: DaemonSet
+apiVersion: apps/v1
+metadata:
+  name: credstore-csi-provider
+  namespace: csi
+  labels:
+    app: credstore-csi-provider
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: credstore-csi-provider
+  template:
+    metadata:
+      labels:
+        app: credstore-csi-provider
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      automountServiceAccountToken: false
+      containers:
+        - name: credstore-csi-driver
+          image: docker.io/kloyan/credstore-csi-provider:0.0.0-dev
+          args:
+            - --service-key=/etc/credentials/service-key.json
+            - --socket=/provider/credstore.sock
+            - --debug=false
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: 50m
+              memory: 100Mi
+          volumeMounts:
+            - name: sock-vol
+              mountPath: /provider
+            - name: service-key-vol
+              mountPath: /etc/credentials
+          # livenessProbe:
+          #   httpGet:
+          #     path: "/health/ready"
+          #     port: 8080
+          #     scheme: "HTTP"
+          #   failureThreshold: 2
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 5
+          #   successThreshold: 1
+          #   timeoutSeconds: 3
+          # readinessProbe:
+          #   httpGet:
+          #     path: "/health/ready"
+          #     port: 8080
+          #     scheme: "HTTP"
+          #   failureThreshold: 2
+          #   initialDelaySeconds: 5
+          #   periodSeconds: 5
+          #   successThreshold: 1
+          #   timeoutSeconds: 3
+      volumes:
+        - name: sock-vol
+          hostPath:
+            path: /etc/kubernetes/secrets-store-csi-providers
+        - name: service-key-vol
+          secret:
+            secretName: credstore-service-key

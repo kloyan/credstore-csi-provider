@@ -1,0 +1,19 @@
+namespace: csi
+helmCharts:
+- name: secrets-store-csi-driver
+  repo: https://kubernetes-sigs.github.io/secrets-store-csi-driver/charts
+  releaseName: secrets-store-csi-driver
+  includeCRDs: true
+  version: 1.2.4
+  namespace: csi
+  valuesInline:
+    enableSecretRotation: false
+    syncSecret:
+      enabled: false
+resources:
+- namespace.yaml
+- daemonset.yaml
+secretGenerator:
+- name: credstore-service-key
+  files:
+  - service-key.json=secret/service-key.json

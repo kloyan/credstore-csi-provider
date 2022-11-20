@@ -19,14 +19,14 @@ import (
 
 func main() {
 	var debug bool
+	var serviceKeyPath, socketPath string
+
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
-	utils.InitLogger(debug)
-
-	var serviceKeyPath string
 	flag.StringVar(&serviceKeyPath, "service-key", "/tmp/service-key.json", "Path to file which contains the service key")
-
-	var socketPath string
 	flag.StringVar(&socketPath, "socket", "/tmp/credstore.sock", "Path to socket on which to listen for driver gRPC calls")
+	flag.Parse()
+
+	utils.InitLogger(debug)
 
 	if err := startServer(serviceKeyPath, socketPath); err != nil {
 		utils.Logger.Errorw("error running grpc server", "err", err)

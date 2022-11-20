@@ -21,11 +21,11 @@ func NewProvider(credStoreClient client.Client) *Provider {
 	}
 }
 
-func (p *Provider) HandleMountRequest(ctx context.Context, config config.Parameters) (*pb.MountResponse, error) {
+func (p *Provider) HandleMountRequest(ctx context.Context, params config.Parameters) (*pb.MountResponse, error) {
 	var files []*pb.File
 	var versions []*pb.ObjectVersion
 
-	for _, cred := range config.Credentials {
+	for _, cred := range params.Credentials {
 		content, err := p.getCredentialContent(ctx, cred)
 		if err != nil {
 			return nil, err
@@ -33,7 +33,7 @@ func (p *Provider) HandleMountRequest(ctx context.Context, config config.Paramet
 
 		files = append(files, &pb.File{
 			Path:     cred.FileName,
-			Mode:     int32(config.Permission),
+			Mode:     int32(params.Permission),
 			Contents: []byte(content),
 		})
 
