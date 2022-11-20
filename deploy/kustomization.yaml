@@ -1,0 +1,8 @@
+namespace: csi
+resources:
+- namespace.yaml
+- daemonset.yaml
+secretGenerator:
+- name: credstore-service-key
+  files:
+  - service-key.json=secret/service-key.json
