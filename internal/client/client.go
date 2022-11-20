@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/kloyan/credstore-csi-provider/internal/config"
 )
 
 const (
@@ -41,18 +43,23 @@ type client struct {
 	HTTP    *http.Client
 }
 
-func NewClient(baseUrl string, cert *tls.Certificate, timeout time.Duration) *client {
+func NewClient(serviceKey config.ServiceKey, timeout time.Duration) (*client, error) {
+	cert, err := tls.X509KeyPair([]byte(serviceKey.Certificate), []byte(serviceKey.Key))
+	if err != nil {
+		return nil, fmt.Errorf("could not parse x509 key pair: %v", err)
+	}
+
 	return &client{
-		BaseURL: baseUrl,
+		BaseURL: serviceKey.URL,
 		HTTP: &http.Client{
 			Timeout: timeout,
 			Transport: &http.Transport{
 				TLSClientConfig: &tls.Config{
-					Certificates: []tls.Certificate{*cert},
+					Certificates: []tls.Certificate{cert},
 				},
 			},
 		},
-	}
+	}, nil
 }
 
 func (c *client) GetPassword(namespace, name string) (*PasswordCredential, error) {

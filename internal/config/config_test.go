@@ -66,14 +66,14 @@ func TestParse(t *testing.T) {
 		permission string
 		targetPath string
 		attributes map[string]string
-		expected   Config
+		expected   Parameters
 	}{
 		{
 			name:       "valid credentials",
 			permission: "640",
 			targetPath: "my/path",
 			attributes: map[string]string{"credentials": credentials},
-			expected: Config{
+			expected: Parameters{
 				Permission: 640,
 				TargetPath: "my/path",
 				Credentials: []Credential{
@@ -87,7 +87,7 @@ func TestParse(t *testing.T) {
 			permission: "640",
 			targetPath: "my/path",
 			attributes: nil,
-			expected: Config{
+			expected: Parameters{
 				Permission:  640,
 				TargetPath:  "my/path",
 				Credentials: nil,
@@ -99,7 +99,7 @@ func TestParse(t *testing.T) {
 		jsonStr, err := json.Marshal(d.attributes)
 		require.NoError(t, err, d.name)
 
-		actual, err := Parse(string(jsonStr), d.targetPath, d.permission)
+		actual, err := ParseParameters(string(jsonStr), d.targetPath, d.permission)
 		require.NoError(t, err, d.name)
 		require.Equal(t, d.expected, actual, d.name)
 	}
@@ -166,8 +166,8 @@ func TestParse_Errors(t *testing.T) {
 		jsonStr, err := json.Marshal(d.attributes)
 		require.NoError(t, err, d.name)
 
-		actual, err := Parse(string(jsonStr), d.targetPath, d.permission)
+		actual, err := ParseParameters(string(jsonStr), d.targetPath, d.permission)
 		require.EqualError(t, err, d.errorMsg, d.name)
-		require.Equal(t, Config{}, actual, d.name)
+		require.Equal(t, Parameters{}, actual, d.name)
 	}
 }
