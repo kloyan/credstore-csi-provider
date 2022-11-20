@@ -2,7 +2,9 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net"
+	"os"
 
 	"github.com/kloyan/credstore-csi-provider/internal/config"
 	"github.com/kloyan/credstore-csi-provider/internal/provider"
@@ -18,11 +20,11 @@ type Server struct {
 	provider   *provider.Provider
 }
 
-func NewServer(provider *provider.Provider, socketPath string, opt ...grpc.ServerOption) *Server {
+func NewServer(provider *provider.Provider, providerPath string, opt ...grpc.ServerOption) *Server {
 	server := grpc.NewServer(opt...)
 	s := &Server{
 		grpcServer: server,
-		socketPath: socketPath,
+		socketPath: fmt.Sprintf("%s/credstore.sock", providerPath),
 		provider:   provider,
 	}
 	pb.RegisterCSIDriverProviderServer(server, s)
@@ -31,7 +33,7 @@ func NewServer(provider *provider.Provider, socketPath string, opt ...grpc.Serve
 
 func (s *Server) Start() error {
 	var err error
-	s.listener, err = net.Listen("unix", s.socketPath)
+	s.listener, err = listen(s.socketPath)
 	if err != nil {
 		return err
 	}
@@ -61,4 +63,14 @@ func (s *Server) Mount(ctx context.Context, req *pb.MountRequest) (*pb.MountResp
 	}
 
 	return s.provider.HandleMountRequest(ctx, params)
+}
+
+func listen(socketPath string) (net.Listener, error) {
+	// Remove socket in case it was not deleted during the last shutdown
+	if _, err := os.Stat(socketPath); err == nil {
+		if err := os.Remove(socketPath); err != nil {
+			return nil, fmt.Errorf("could not delete old socket: %v", err)
+		}
+	}
+	return net.Listen("unix", socketPath)
 }

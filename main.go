@@ -19,16 +19,16 @@ import (
 
 func main() {
 	var debug bool
-	var serviceKeyPath, socketPath string
+	var serviceKeyPath, providerPath string
 
 	flag.BoolVar(&debug, "debug", false, "Enable debug logging")
-	flag.StringVar(&serviceKeyPath, "service-key", "/tmp/service-key.json", "Path to file which contains the service key")
-	flag.StringVar(&socketPath, "socket", "/tmp/credstore.sock", "Path to socket on which to listen for driver gRPC calls")
+	flag.StringVar(&serviceKeyPath, "service-key-path", "/tmp/service-key.json", "Path to file which contains the service key")
+	flag.StringVar(&providerPath, "provider-path", "/tmp", "Path to directory in which the provider unix domain socket shall be created")
 	flag.Parse()
 
 	utils.InitLogger(debug)
 
-	if err := startServer(serviceKeyPath, socketPath); err != nil {
+	if err := startServer(serviceKeyPath, providerPath); err != nil {
 		utils.Logger.Errorw("error running grpc server", "err", err)
 		os.Exit(1)
 	}
@@ -42,7 +42,7 @@ func readServiceKey(serviceKeyPath string) (config.ServiceKey, error) {
 	return config.ParseServiceKey(jsonBytes)
 }
 
-func startServer(serviceKeyPath, socketPath string) error {
+func startServer(serviceKeyPath, providerPath string) error {
 	serviceKey, err := readServiceKey(serviceKeyPath)
 	if err != nil {
 		return err
@@ -62,7 +62,7 @@ func startServer(serviceKeyPath, socketPath string) error {
 		return resp, err
 	})
 
-	server := server.NewServer(provider, socketPath, interceptor)
+	server := server.NewServer(provider, providerPath, interceptor)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
