@@ -43,6 +43,7 @@ func readServiceKey(serviceKeyPath string) (config.ServiceKey, error) {
 }
 
 func startServer(serviceKeyPath, providerPath string) error {
+	defer utils.Logger.Sync()
 	serviceKey, err := readServiceKey(serviceKeyPath)
 	if err != nil {
 		return err
@@ -56,9 +57,13 @@ func startServer(serviceKeyPath, providerPath string) error {
 	provider := provider.NewProvider(client)
 
 	interceptor := grpc.UnaryInterceptor(func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
-		utils.Logger.Infow("processing unary gRPC call", "grpc.method", info.FullMethod)
+		utils.Logger.Infow("processing grpc request", "grpc.method", info.FullMethod)
 		resp, err := handler(ctx, req)
-		utils.Logger.Infow("Finished unary gRPC call", "grpc.method", info.FullMethod, "grpc.code", status.Code(err), "err", err)
+		utils.Logger.Infow("finished grpc request",
+			"grpc.method", info.FullMethod,
+			"grpc.code", status.Code(err),
+			"err", err,
+		)
 		return resp, err
 	})
 
@@ -68,12 +73,14 @@ func startServer(serviceKeyPath, providerPath string) error {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		sig := <-c
-		utils.Logger.Infof("caugh os signal %s, shutting down", sig)
+		utils.Logger.Infof("caught os signal %s, shutting down", sig)
 		server.Stop()
 	}()
 
+	utils.Logger.Info("starting grpc server")
 	if err := server.Start(); err != nil {
 		return err
 	}
+
 	return nil
 }

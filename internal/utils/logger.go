@@ -1,16 +1,25 @@
 package utils
 
-import "go.uber.org/zap"
+import (
+	"os"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
 var Logger *zap.SugaredLogger
 
 func InitLogger(debug bool) {
-	var logger *zap.Logger
-	if debug {
-		logger, _ = zap.NewDevelopment()
-	} else {
-		logger, _ = zap.NewProduction()
-	}
+	console := zapcore.Lock(os.Stdout)
+	encoder := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	enabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
+		if debug {
+			return lvl >= zapcore.DebugLevel
+		} else {
+			return lvl >= zapcore.InfoLevel
+		}
+	})
 
-	Logger = logger.Sugar()
+	core := zapcore.NewTee(zapcore.NewCore(encoder, console, enabler))
+	Logger = zap.New(core).Sugar()
 }
