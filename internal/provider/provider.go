@@ -53,7 +53,7 @@ func (p *Provider) HandleMountRequest(ctx context.Context, params config.Paramet
 
 func (p *Provider) getCredentialContent(ctx context.Context, cred config.Credential) (string, error) {
 	if cred.Type == "password" {
-		pass, err := p.credStoreClient.GetPassword(cred.Namespace, cred.Name)
+		pass, err := p.credStoreClient.GetPassword(ctx, cred.Namespace, cred.Name)
 		if err != nil {
 			return "", err
 		}
@@ -61,7 +61,7 @@ func (p *Provider) getCredentialContent(ctx context.Context, cred config.Credent
 	}
 
 	if cred.Type == "key" {
-		key, err := p.credStoreClient.GetKey(cred.Namespace, cred.Name)
+		key, err := p.credStoreClient.GetKey(ctx, cred.Namespace, cred.Name)
 		if err != nil {
 			return "", err
 		}

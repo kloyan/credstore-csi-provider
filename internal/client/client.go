@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -31,8 +32,8 @@ type KeyCredential struct {
 }
 
 type Client interface {
-	GetPassword(namespace, name string) (*PasswordCredential, error)
-	GetKey(namespace, name string) (*KeyCredential, error)
+	GetPassword(ctx context.Context, namespace, name string) (*PasswordCredential, error)
+	GetKey(ctx context.Context, namespace, name string) (*KeyCredential, error)
 }
 
 type client struct {
@@ -61,22 +62,22 @@ func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout tim
 	}, nil
 }
 
-func (c *client) GetPassword(namespace, name string) (*PasswordCredential, error) {
+func (c *client) GetPassword(ctx context.Context, namespace, name string) (*PasswordCredential, error) {
 	url := fmt.Sprintf("%s/password?name=%s", c.BaseURL, name)
 	cred := &PasswordCredential{}
-	err := c.getRequest(url, namespace, cred)
+	err := c.getRequest(ctx, url, namespace, cred)
 	return cred, err
 }
 
-func (c *client) GetKey(namespace, name string) (*KeyCredential, error) {
+func (c *client) GetKey(ctx context.Context, namespace, name string) (*KeyCredential, error) {
 	url := fmt.Sprintf("%s/key?name=%s", c.BaseURL, name)
 	cred := &KeyCredential{}
-	err := c.getRequest(url, namespace, cred)
+	err := c.getRequest(ctx, url, namespace, cred)
 	return cred, err
 }
 
-func (c *client) getRequest(url, namespace string, cred interface{}) error {
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func (c *client) getRequest(ctx context.Context, url, namespace string, cred interface{}) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("could not build http request: %v", err)
 	}
