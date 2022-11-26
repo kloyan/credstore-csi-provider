@@ -15,9 +15,9 @@ func InitLogger(debug bool) {
 	enabler := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 		if debug {
 			return lvl >= zapcore.DebugLevel
-		} else {
-			return lvl >= zapcore.InfoLevel
 		}
+
+		return lvl >= zapcore.InfoLevel
 	})
 
 	core := zapcore.NewTee(zapcore.NewCore(encoder, console, enabler))
