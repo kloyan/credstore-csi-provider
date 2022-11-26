@@ -49,7 +49,12 @@ func startServer(serviceKeyPath, providerPath string) error {
 		return err
 	}
 
-	client, err := client.NewClient(serviceKey, 3*time.Second)
+	encryptor, err := client.NewJWEDecryptor(serviceKey)
+	if err != nil {
+		return err
+	}
+
+	client, err := client.NewClient(serviceKey, encryptor, 3*time.Second)
 	if err != nil {
 		return err
 	}

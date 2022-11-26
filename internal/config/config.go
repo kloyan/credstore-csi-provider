@@ -12,6 +12,9 @@ type ServiceKey struct {
 	URL         string `json:"url"`
 	Certificate string `json:"certificate"`
 	Key         string `json:"key"`
+	Encryption  struct {
+		ClientPrivateKey string `json:"client_private_key"`
+	} `json:"encryption"`
 }
 
 type Parameters struct {

@@ -72,5 +72,6 @@ func listen(socketPath string) (net.Listener, error) {
 			return nil, fmt.Errorf("could not delete old socket: %v", err)
 		}
 	}
+
 	return net.Listen("unix", socketPath)
 }

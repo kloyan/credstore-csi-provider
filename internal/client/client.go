@@ -4,14 +4,11 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
 	"github.com/kloyan/credstore-csi-provider/internal/config"
-)
-
-const (
-	namespaceHeader = "sapcp-credstore-namespace"
 )
 
 type PasswordCredential struct {
@@ -39,11 +36,12 @@ type Client interface {
 }
 
 type client struct {
-	BaseURL string
-	HTTP    *http.Client
+	BaseURL   string
+	HTTP      *http.Client
+	Encryptor JWEDecryptor
 }
 
-func NewClient(serviceKey config.ServiceKey, timeout time.Duration) (*client, error) {
+func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout time.Duration) (*client, error) {
 	cert, err := tls.X509KeyPair([]byte(serviceKey.Certificate), []byte(serviceKey.Key))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse x509 key pair: %v", err)
@@ -59,6 +57,7 @@ func NewClient(serviceKey config.ServiceKey, timeout time.Duration) (*client, er
 				},
 			},
 		},
+		Encryptor: encryptor,
 	}, nil
 }
 
@@ -82,7 +81,7 @@ func (c *client) getRequest(url, namespace string, cred interface{}) error {
 		return fmt.Errorf("could not build http request: %v", err)
 	}
 
-	req.Header.Set(namespaceHeader, namespace)
+	req.Header.Set("sapcp-credstore-namespace", namespace)
 
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
@@ -94,7 +93,17 @@ func (c *client) getRequest(url, namespace string, cred interface{}) error {
 		return fmt.Errorf("unexpected status: got %v", resp.Status)
 	}
 
-	err = json.NewDecoder(resp.Body).Decode(cred)
+	jwe, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("could not read response body: %v", err)
+	}
+
+	decrypted, err := c.Encryptor.Decrypt(jwe)
+	if err != nil {
+		return fmt.Errorf("could not decrypt response body: %v", err)
+	}
+
+	err = json.Unmarshal(decrypted, cred)
 	if err != nil {
 		return fmt.Errorf("could not decode response body: %v", err)
 	}
