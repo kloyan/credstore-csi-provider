@@ -7,12 +7,30 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  get-go-version:
+    name: "Determine Go version"
     runs-on: ubuntu-latest
+    outputs:
+      go-version: ${{ steps.get-go-version.outputs.go-version }}
+    steps:
+      - uses: actions/checkout@v3
+      - name: Determine Go version
+        id: get-go-version
+        run: |
+          echo "Using Go v$(cat .go-version)"
+          echo "go-version=$(cat .go-version)" >> $GITHUB_OUTPUT
 
+  test:
+    name: "Run tests"
+    needs:
+      - get-go-version
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-
-    - name: Run unit tests
+    - uses: actions/setup-go@v3
+      with:
+        go-version: ${{ needs.get-go-version.outputs.go-version }}
+    - name: Lint
+      run: make vet
+    - name: Unit Tests
       run: make test
