@@ -12,10 +12,10 @@ import (
 )
 
 type Provider struct {
-	credStoreClient client.Client
+	credStoreClient *client.Client
 }
 
-func NewProvider(credStoreClient client.Client) *Provider {
+func NewProvider(credStoreClient *client.Client) *Provider {
 	return &Provider{
 		credStoreClient: credStoreClient,
 	}
@@ -57,6 +57,7 @@ func (p *Provider) getCredentialContent(ctx context.Context, cred config.Credent
 		if err != nil {
 			return "", err
 		}
+
 		return pass.Value, nil
 	}
 
@@ -65,6 +66,7 @@ func (p *Provider) getCredentialContent(ctx context.Context, cred config.Credent
 		if err != nil {
 			return "", err
 		}
+
 		return key.Value, nil
 	}
 

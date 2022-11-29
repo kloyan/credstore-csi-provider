@@ -27,6 +27,7 @@ func NewServer(provider *provider.Provider, providerPath string, opt ...grpc.Ser
 		socketPath: fmt.Sprintf("%s/credstore.sock", providerPath),
 		provider:   provider,
 	}
+
 	pb.RegisterCSIDriverProviderServer(server, s)
 	return s
 }
@@ -37,9 +38,11 @@ func (s *Server) Start() error {
 	if err != nil {
 		return err
 	}
+
 	if err := s.grpcServer.Serve(s.listener); err != nil {
 		return err
 	}
+
 	return nil
 }
 

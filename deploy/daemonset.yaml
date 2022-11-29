@@ -25,7 +25,6 @@ spec:
           args:
             - --service-key-path=/etc/credentials/service-key.json
             - --provider-path=/provider
-            - --debug=true
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false

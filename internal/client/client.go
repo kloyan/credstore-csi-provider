@@ -31,24 +31,19 @@ type KeyCredential struct {
 	Value      string `json:"value"`
 }
 
-type Client interface {
-	GetPassword(ctx context.Context, namespace, name string) (*PasswordCredential, error)
-	GetKey(ctx context.Context, namespace, name string) (*KeyCredential, error)
-}
-
-type client struct {
+type Client struct {
 	BaseURL   string
 	HTTP      *http.Client
 	Encryptor JWEDecryptor
 }
 
-func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout time.Duration) (*client, error) {
+func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout time.Duration) (*Client, error) {
 	cert, err := tls.X509KeyPair([]byte(serviceKey.Certificate), []byte(serviceKey.Key))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse x509 key pair: %v", err)
 	}
 
-	return &client{
+	return &Client{
 		BaseURL: serviceKey.URL,
 		HTTP: &http.Client{
 			Timeout: timeout,
@@ -62,21 +57,21 @@ func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout tim
 	}, nil
 }
 
-func (c *client) GetPassword(ctx context.Context, namespace, name string) (*PasswordCredential, error) {
+func (c *Client) GetPassword(ctx context.Context, namespace, name string) (*PasswordCredential, error) {
 	url := fmt.Sprintf("%s/password?name=%s", c.BaseURL, name)
 	cred := &PasswordCredential{}
 	err := c.getRequest(ctx, url, namespace, cred)
 	return cred, err
 }
 
-func (c *client) GetKey(ctx context.Context, namespace, name string) (*KeyCredential, error) {
+func (c *Client) GetKey(ctx context.Context, namespace, name string) (*KeyCredential, error) {
 	url := fmt.Sprintf("%s/key?name=%s", c.BaseURL, name)
 	cred := &KeyCredential{}
 	err := c.getRequest(ctx, url, namespace, cred)
 	return cred, err
 }
 
-func (c *client) getRequest(ctx context.Context, url, namespace string, cred interface{}) error {
+func (c *Client) getRequest(ctx context.Context, url, namespace string, cred interface{}) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return fmt.Errorf("could not build http request: %v", err)
