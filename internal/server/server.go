@@ -8,8 +8,8 @@ import (
 
 	"github.com/kloyan/credstore-csi-provider/internal/config"
 	"github.com/kloyan/credstore-csi-provider/internal/provider"
+	"github.com/kloyan/credstore-csi-provider/internal/version"
 	"google.golang.org/grpc"
-	"sigs.k8s.io/secrets-store-csi-driver/pkg/version"
 	pb "sigs.k8s.io/secrets-store-csi-driver/provider/v1alpha1"
 )
 

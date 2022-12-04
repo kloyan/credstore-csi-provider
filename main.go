@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,6 +13,7 @@ import (
 	"github.com/kloyan/credstore-csi-provider/internal/config"
 	"github.com/kloyan/credstore-csi-provider/internal/provider"
 	"github.com/kloyan/credstore-csi-provider/internal/server"
+	"github.com/kloyan/credstore-csi-provider/internal/version"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/status"
@@ -19,12 +21,31 @@ import (
 
 var Logger *zap.SugaredLogger = initLogger()
 
+func initLogger() *zap.SugaredLogger {
+	logger, _ := zap.NewProduction()
+	sugar := logger.Sugar()
+	return sugar
+}
+
 func main() {
 	var serviceKeyPath, providerPath string
+	var printVersion bool
 
 	flag.StringVar(&serviceKeyPath, "service-key-path", "/tmp/service-key.json", "Path to file which contains the service key")
 	flag.StringVar(&providerPath, "provider-path", "/tmp", "Path to directory in which the provider unix domain socket shall be created")
+	flag.BoolVar(&printVersion, "version", false, "Print version details")
 	flag.Parse()
+
+	if printVersion {
+		ver, err := version.GetVersion()
+		if err != nil {
+			fmt.Printf("could not print version: %v", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(ver)
+		return
+	}
 
 	if err := startServer(serviceKeyPath, providerPath); err != nil {
 		Logger.Errorw("error running grpc server", "err", err)
@@ -78,12 +99,6 @@ func startServer(serviceKeyPath, providerPath string) error {
 	}
 
 	return nil
-}
-
-func initLogger() *zap.SugaredLogger {
-	logger, _ := zap.NewProduction()
-	sugar := logger.Sugar()
-	return sugar
 }
 
 func readServiceKey(serviceKeyPath string) (config.ServiceKey, error) {

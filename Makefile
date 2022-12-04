@@ -1,3 +1,6 @@
+GIT_COMMIT=$(shell git rev-list -1 HEAD)
+BUILD_DATE=$(shell date +"%Y-%m-%dT%H:%M:%SZ")
+
 DOCKER?=podman
 BIN_DIR?=dist/
 REGISTRY_NAME?=kloyan
@@ -5,6 +8,10 @@ IMAGE_NAME=credstore-csi-provider
 VERSION?=0.0.0-dev
 IMAGE_TAG=$(REGISTRY_NAME)/$(IMAGE_NAME):$(VERSION)
 KIND_CLUSTER_NAME?=credstore-cluster
+PKG=github.com/kloyan/credstore-csi-provider/internal/version
+LDFLAGS?="-X '$(PKG).BuildVersion=$(VERSION)' \
+		  -X '$(PKG).BuildDate=$(BUILD_DATE)' \
+		  -X '$(PKG).GitCommit=$(GIT_COMMIT)'"
 
 default: build
 
@@ -34,7 +41,7 @@ vet: fmt
 
 .PHONY: build
 build: vet test
-	CGO_ENABLED=0 go build -o $(BIN_DIR) .
+	CGO_ENABLED=0 go build -ldflags $(LDFLAGS) -o $(BIN_DIR) .
 
 .PHONY: image
 image:

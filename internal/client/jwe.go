@@ -15,12 +15,12 @@ type JWEDecryptor struct {
 }
 
 func NewJWEDecryptor(serviceKey config.ServiceKey) (JWEDecryptor, error) {
-	privkeyBytes, err := base64.StdEncoding.DecodeString(serviceKey.Encryption.ClientPrivateKey)
+	bytes, err := base64.StdEncoding.DecodeString(serviceKey.Encryption.ClientPrivateKey)
 	if err != nil {
 		return JWEDecryptor{}, fmt.Errorf("could not decode private key: %v", err)
 	}
 
-	privkey, err := x509.ParsePKCS8PrivateKey(privkeyBytes)
+	privkey, err := x509.ParsePKCS8PrivateKey(bytes)
 	if err != nil {
 		return JWEDecryptor{}, fmt.Errorf("could not parse private key: %v", err)
 	}
