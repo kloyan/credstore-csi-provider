@@ -1,6 +1,6 @@
 module github.com/kloyan/credstore-csi-provider
 
-go 1.19
+go 1.20
 
 require (
 	github.com/lestrrat-go/jwx/v2 v2.0.8
