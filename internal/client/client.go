@@ -59,16 +59,24 @@ func NewClient(serviceKey config.ServiceKey, decryptor JWEDecryptor, timeout tim
 
 func (c *Client) GetPassword(ctx context.Context, namespace, name string) (*PasswordCredential, error) {
 	url := fmt.Sprintf("%s/password?name=%s", c.BaseURL, name)
-	cred := &PasswordCredential{}
-	err := c.getRequest(ctx, url, namespace, cred)
-	return cred, err
+	password := &PasswordCredential{}
+	err := c.getRequest(ctx, url, namespace, password)
+	if err != nil {
+		return nil, fmt.Errorf("could not get password %s/%s from credstore: %v", namespace, name, err)
+	}
+
+	return password, nil
 }
 
 func (c *Client) GetKey(ctx context.Context, namespace, name string) (*KeyCredential, error) {
 	url := fmt.Sprintf("%s/key?name=%s", c.BaseURL, name)
-	cred := &KeyCredential{}
-	err := c.getRequest(ctx, url, namespace, cred)
-	return cred, err
+	key := &KeyCredential{}
+	err := c.getRequest(ctx, url, namespace, key)
+	if err != nil {
+		return nil, fmt.Errorf("could not get key %s/%s from credstore: %v", namespace, name, err)
+	}
+
+	return key, nil
 }
 
 func (c *Client) getRequest(ctx context.Context, url, namespace string, cred interface{}) error {
