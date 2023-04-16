@@ -34,10 +34,10 @@ type KeyCredential struct {
 type Client struct {
 	BaseURL   string
 	HTTP      *http.Client
-	Encryptor JWEDecryptor
+	Decryptor JWEDecryptor
 }
 
-func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout time.Duration) (*Client, error) {
+func NewClient(serviceKey config.ServiceKey, decryptor JWEDecryptor, timeout time.Duration) (*Client, error) {
 	cert, err := tls.X509KeyPair([]byte(serviceKey.Certificate), []byte(serviceKey.Key))
 	if err != nil {
 		return nil, fmt.Errorf("could not parse x509 key pair: %v", err)
@@ -53,7 +53,7 @@ func NewClient(serviceKey config.ServiceKey, encryptor JWEDecryptor, timeout tim
 				},
 			},
 		},
-		Encryptor: encryptor,
+		Decryptor: decryptor,
 	}, nil
 }
 
@@ -94,7 +94,7 @@ func (c *Client) getRequest(ctx context.Context, url, namespace string, cred int
 		return fmt.Errorf("could not read response body: %v", err)
 	}
 
-	decrypted, err := c.Encryptor.Decrypt(jwe)
+	decrypted, err := c.Decryptor.Decrypt(jwe)
 	if err != nil {
 		return fmt.Errorf("could not decrypt response body: %v", err)
 	}
