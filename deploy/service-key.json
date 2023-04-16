@@ -1,0 +1,8 @@
+{
+	"encryption": {
+		"client_private_key": "<PLACEHOLDER>"
+	},
+	"certificate": "<PLACEHOLDER>",
+	"url": "<PLACEHOLDER>",
+	"key": "<PLACEHOLDER>"
+}

@@ -1,0 +1,4 @@
+namespace: default
+resources:
+- secret-provider-class.yaml
+- pod.yaml
