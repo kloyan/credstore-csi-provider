@@ -23,9 +23,8 @@ These [example manifests](./example/) demonstrate the basic scenario of mounting
 
 The credential's metadata is described in the [secret-provider-class.yaml](./example/secret-provider-class.yaml) and follows this syntax:
 
-```yaml
-- name: <name of the source credential in SAP CredStore>
-  namespace: <namespace of the source credential in SAP CredStore>
-  type: <type of the source credential in SAP CredStore, either key or password>
-  fileName: <name of the destination file which will be mounted in the pod>
-```
+* `name` - name of the source credential in SAP Credential Store
+* `namespace` - namespace of the source credential in SAP Credential Store
+* `type` - type of the source credential in SAP Credential Store, either *key* or *password*
+* `fileName` - name of the destination file which will be mounted in the K8s pod
+* `mode` - permissions of the destination file, e.g., *0640*, *0400*, *0777*. Defaults to *0644* if omitted

@@ -13,10 +13,21 @@ const (
   type: password
   namespace: dev
   fileName: password.txt
+  mode: 0644
 - name: myKey
   type: key
   namespace: dev
   fileName: key.der
+  mode: 0400
+- name: myKeyDec
+  type: key
+  namespace: dev
+  fileName: key-dec.der
+  mode: 420
+- name: myKeyNoMode
+  type: key
+  namespace: dev
+  fileName: key-no-mode.der
 `
 	noNameCredential = `
 - type: password
@@ -64,32 +75,29 @@ func TestParse(t *testing.T) {
 	data := []struct {
 		name       string
 		permission string
-		targetPath string
 		attributes map[string]string
 		expected   Parameters
 	}{
 		{
 			name:       "valid credentials",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": credentials},
 			expected: Parameters{
-				Permission: 640,
-				TargetPath: "my/path",
+				Permission: 420,
 				Credentials: []Credential{
-					{"dev", "password", "myPassword", "password.txt"},
-					{"dev", "key", "myKey", "key.der"},
+					{"dev", "password", "myPassword", "password.txt", modePtr(0644)},
+					{"dev", "key", "myKey", "key.der", modePtr(0400)},
+					{"dev", "key", "myKeyDec", "key-dec.der", modePtr(0644)},
+					{"dev", "key", "myKeyNoMode", "key-no-mode.der", nil},
 				},
 			},
 		},
 		{
 			name:       "no credentials",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: nil,
 			expected: Parameters{
-				Permission:  640,
-				TargetPath:  "my/path",
+				Permission:  420,
 				Credentials: nil,
 			},
 		},
@@ -99,7 +107,7 @@ func TestParse(t *testing.T) {
 		jsonStr, err := json.Marshal(d.attributes)
 		require.NoError(t, err, d.name)
 
-		actual, err := ParseParameters(string(jsonStr), d.targetPath, d.permission)
+		actual, err := ParseParameters(string(jsonStr), d.permission)
 		require.NoError(t, err, d.name)
 		require.Equal(t, d.expected, actual, d.name)
 	}
@@ -109,56 +117,44 @@ func TestParse_Errors(t *testing.T) {
 	data := []struct {
 		name       string
 		permission string
-		targetPath string
 		attributes map[string]string
 		errorMsg   string
 	}{
 		{
 			name:       "missing name",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": noNameCredential},
 			errorMsg:   "credential name cannot be empty",
 		},
 		{
 			name:       "missing namespace",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": noNamespaceCredential},
 			errorMsg:   "credential namespace cannot be empty",
 		},
 		{
 			name:       "missing type",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": noTypeCredential},
 			errorMsg:   "credential type cannot be empty or invalid",
 		},
 		{
 			name:       "invalid type",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": invalidTypeCredential},
 			errorMsg:   "credential type cannot be empty or invalid",
 		},
 		{
 			name:       "missing file name",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": noFileNameCredential},
 			errorMsg:   "credential file name cannot be empty",
 		},
 		{
 			name:       "duplicate file name",
-			permission: "640",
-			targetPath: "my/path",
+			permission: "420",
 			attributes: map[string]string{"credentials": duplicateFileNames},
 			errorMsg:   "file name must be unique, password.txt is duplicated",
-		},
-		{
-			name:       "missing target path",
-			permission: "640",
-			errorMsg:   "target path cannot be empty",
 		},
 	}
 
@@ -166,8 +162,12 @@ func TestParse_Errors(t *testing.T) {
 		jsonStr, err := json.Marshal(d.attributes)
 		require.NoError(t, err, d.name)
 
-		actual, err := ParseParameters(string(jsonStr), d.targetPath, d.permission)
+		actual, err := ParseParameters(string(jsonStr), d.permission)
 		require.EqualError(t, err, d.errorMsg, d.name)
 		require.Equal(t, Parameters{}, actual, d.name)
 	}
+}
+
+func modePtr(mode int32) *int32 {
+	return &mode
 }

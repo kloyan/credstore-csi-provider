@@ -60,7 +60,7 @@ func (s *Server) Version(ctx context.Context, req *pb.VersionRequest) (*pb.Versi
 }
 
 func (s *Server) Mount(ctx context.Context, req *pb.MountRequest) (*pb.MountResponse, error) {
-	params, err := config.ParseParameters(req.Attributes, req.TargetPath, req.Permission)
+	params, err := config.ParseParameters(req.Attributes, req.Permission)
 	if err != nil {
 		return nil, err
 	}

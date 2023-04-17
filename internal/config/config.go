@@ -3,7 +3,6 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 
 	"gopkg.in/yaml.v3"
 )
@@ -18,8 +17,7 @@ type ServiceKey struct {
 }
 
 type Parameters struct {
-	TargetPath  string
-	Permission  os.FileMode
+	Permission  int32
 	Credentials []Credential
 }
 
@@ -28,6 +26,7 @@ type Credential struct {
 	Type      string `yaml:"type,omitempty"`
 	Name      string `yaml:"name,omitempty"`
 	FileName  string `yaml:"fileName,omitempty"`
+	Mode      *int32 `yaml:"mode,omitempty"`
 }
 
 func ParseServiceKey(jsonBytes []byte) (ServiceKey, error) {
@@ -39,10 +38,8 @@ func ParseServiceKey(jsonBytes []byte) (ServiceKey, error) {
 	return serviceKey, nil
 }
 
-func ParseParameters(attributes, targetPath, permission string) (Parameters, error) {
-	params := Parameters{
-		TargetPath: targetPath,
-	}
+func ParseParameters(attributes, permission string) (Parameters, error) {
+	params := Parameters{}
 
 	if err := json.Unmarshal([]byte(permission), &params.Permission); err != nil {
 		return Parameters{}, fmt.Errorf("could not parse permission field: %v", err)
@@ -54,7 +51,7 @@ func ParseParameters(attributes, targetPath, permission string) (Parameters, err
 		return Parameters{}, err
 	}
 
-	if err = validate(params); err != nil {
+	if err = validateCredentials(params); err != nil {
 		return Parameters{}, err
 	}
 
@@ -76,11 +73,7 @@ func parseCredentials(attributesStr string) ([]Credential, error) {
 	return creds, nil
 }
 
-func validate(params Parameters) error {
-	if len(params.TargetPath) == 0 {
-		return fmt.Errorf("target path cannot be empty")
-	}
-
+func validateCredentials(params Parameters) error {
 	fileNames := make(map[string]bool)
 	for _, cred := range params.Credentials {
 		if len(cred.Namespace) == 0 {

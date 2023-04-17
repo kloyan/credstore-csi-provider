@@ -31,9 +31,14 @@ func (p *Provider) HandleMountRequest(ctx context.Context, params config.Paramet
 			return nil, err
 		}
 
+		mode := params.Permission
+		if cred.Mode != nil {
+			mode = *cred.Mode
+		}
+
 		files = append(files, &pb.File{
 			Path:     cred.FileName,
-			Mode:     int32(params.Permission),
+			Mode:     mode,
 			Contents: []byte(content),
 		})
 
