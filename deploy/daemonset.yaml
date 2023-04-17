@@ -20,8 +20,8 @@ spec:
         kubernetes.io/os: linux
       automountServiceAccountToken: false
       containers:
-        - name: credstore-csi-driver
-          image: docker.io/kloyan/credstore-csi-provider:0.0.0-dev
+        - name: provider
+          image: ghcr.io/kloyan/credstore-csi-provider:v1.0.0
           args:
             - --service-key-path=/etc/credentials/service-key.json
             - --provider-path=/provider
@@ -43,26 +43,6 @@ spec:
               mountPath: /provider
             - name: service-key-vol
               mountPath: /etc/credentials
-          # livenessProbe:
-          #   httpGet:
-          #     path: "/health/ready"
-          #     port: 8080
-          #     scheme: "HTTP"
-          #   failureThreshold: 2
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 5
-          #   successThreshold: 1
-          #   timeoutSeconds: 3
-          # readinessProbe:
-          #   httpGet:
-          #     path: "/health/ready"
-          #     port: 8080
-          #     scheme: "HTTP"
-          #   failureThreshold: 2
-          #   initialDelaySeconds: 5
-          #   periodSeconds: 5
-          #   successThreshold: 1
-          #   timeoutSeconds: 3
       volumes:
         - name: provider-vol
           hostPath:
