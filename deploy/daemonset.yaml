@@ -21,7 +21,7 @@ spec:
       automountServiceAccountToken: false
       containers:
         - name: provider
-          image: ghcr.io/kloyan/credstore-csi-provider:dev
+          image: ghcr.io/kloyan/credstore-csi-provider:v1.1.0
           args:
             - --service-key-path=/etc/credentials/service-key.json
             - --provider-path=/provider
