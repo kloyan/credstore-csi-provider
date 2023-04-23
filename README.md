@@ -28,3 +28,15 @@ The credential's metadata is described in the [secret-provider-class.yaml](./exa
 * `type` - type of the source credential in SAP Credential Store, either *key* or *password*
 * `fileName` - name of the destination file which will be mounted in the K8s pod
 * `mode` - permissions of the destination file, e.g., *0640*, *0400*, *0777*. Defaults to *0644* if omitted
+
+### Local Setup
+
+```shell
+# Build a custom container image
+make image
+
+# Setup local K8s cluster with kind: https://kind.sigs.k8s.io/
+# The command also deploys the provider and the secrets store csi driver
+make setup-kind
+kubectl get pod -n csi
+```

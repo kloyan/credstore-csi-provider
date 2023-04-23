@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
@@ -29,23 +28,17 @@ func initLogger() *zap.SugaredLogger {
 
 func main() {
 	var serviceKeyPath, providerPath string
-	var printVersion bool
 
 	flag.StringVar(&serviceKeyPath, "service-key-path", "/tmp/service-key.json", "Path to file which contains the service key")
 	flag.StringVar(&providerPath, "provider-path", "/tmp", "Path to directory in which the provider unix domain socket shall be created")
-	flag.BoolVar(&printVersion, "version", false, "Print version details")
 	flag.Parse()
 
-	if printVersion {
-		ver, err := version.GetVersion()
-		if err != nil {
-			fmt.Printf("could not print version: %v", err)
-			os.Exit(1)
-		}
+	ver := version.GetVersion()
 
-		fmt.Println(ver)
-		return
-	}
+	Logger.Infow("initializing credstore provider",
+		"version", ver.BuildVersion,
+		"commit", ver.GitCommit,
+	)
 
 	if err := startServer(serviceKeyPath, providerPath); err != nil {
 		Logger.Errorw("error running grpc server", "err", err)

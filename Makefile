@@ -3,9 +3,9 @@ BUILD_DATE=$(shell date +"%Y-%m-%dT%H:%M:%SZ")
 
 DOCKER?=podman
 BIN_DIR?=dist/
-REGISTRY_NAME?=kloyan
+REGISTRY_NAME?=ghcr.io/kloyan
 IMAGE_NAME=credstore-csi-provider
-VERSION?=0.0.0-dev
+VERSION?=dev
 IMAGE_TAG=$(REGISTRY_NAME)/$(IMAGE_NAME):$(VERSION)
 KIND_CLUSTER_NAME?=credstore-cluster
 PKG=github.com/kloyan/credstore-csi-provider/internal/version

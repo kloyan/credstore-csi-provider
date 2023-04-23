@@ -1,7 +1,6 @@
 package version
 
 import (
-	"encoding/json"
 	"runtime"
 	"testing"
 
@@ -13,14 +12,8 @@ func TestGetVersion(t *testing.T) {
 	BuildDate = "now"
 	GitCommit = "abc"
 
-	out, err := GetVersion()
-	require.NoError(t, err)
-
-	actual := providerVersion{}
-	err = json.Unmarshal([]byte(out), &actual)
-	require.NoError(t, err)
-
-	expected := providerVersion{
+	actual := GetVersion()
+	expected := ProviderVersion{
 		BuildVersion: BuildVersion,
 		GitCommit:    GitCommit,
 		BuildDate:    BuildDate,
