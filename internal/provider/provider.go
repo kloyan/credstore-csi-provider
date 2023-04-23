@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"sync"
 
 	"github.com/kloyan/credstore-csi-provider/internal/client"
 	"github.com/kloyan/credstore-csi-provider/internal/config"
@@ -22,32 +24,41 @@ func NewProvider(credStoreClient *client.Client) *Provider {
 }
 
 func (p *Provider) HandleMountRequest(ctx context.Context, params config.Parameters) (*pb.MountResponse, error) {
-	var files []*pb.File
-	var versions []*pb.ObjectVersion
+	files := make([]*pb.File, len(params.Credentials))
+	versions := make([]*pb.ObjectVersion, len(params.Credentials))
+	errs := make([]error, len(params.Credentials))
+	wg := sync.WaitGroup{}
 
-	for _, cred := range params.Credentials {
-		content, err := p.getCredentialContent(ctx, cred)
-		if err != nil {
-			return nil, err
-		}
+	for i, cred := range params.Credentials {
+		wg.Add(1)
 
-		mode := params.Permission
-		if cred.Mode != nil {
-			mode = *cred.Mode
-		}
+		go func(i int, cred config.Credential) {
+			defer wg.Done()
 
-		files = append(files, &pb.File{
-			Path:     cred.FileName,
-			Mode:     mode,
-			Contents: []byte(content),
-		})
+			content, err := p.getCredentialContent(ctx, cred)
+			if err != nil {
+				errs[i] = err
+				return
+			}
 
-		version, err := generateVersion(cred, content)
-		if err != nil {
-			return nil, err
-		}
+			mode := params.Permission
+			if cred.Mode != nil {
+				mode = *cred.Mode
+			}
 
-		versions = append(versions, version)
+			files[i] = &pb.File{
+				Path:     cred.FileName,
+				Mode:     mode,
+				Contents: []byte(content),
+			}
+			versions[i] = generateVersion(cred, content)
+		}(i, cred)
+	}
+
+	wg.Wait()
+
+	if err := errors.Join(errs...); err != nil {
+		return nil, err
 	}
 
 	return &pb.MountResponse{
@@ -78,15 +89,12 @@ func (p *Provider) getCredentialContent(ctx context.Context, cred config.Credent
 	return "", fmt.Errorf("invalid credential type %s", cred.Type)
 }
 
-func generateVersion(cred config.Credential, content string) (*pb.ObjectVersion, error) {
+func generateVersion(cred config.Credential, content string) *pb.ObjectVersion {
 	hash := sha256.New()
-	_, err := hash.Write([]byte(fmt.Sprintf("%v:%s", cred, content)))
-	if err != nil {
-		return nil, err
-	}
+	hash.Write([]byte(fmt.Sprintf("%v:%s", cred, content)))
 
 	return &pb.ObjectVersion{
 		Id:      fmt.Sprintf("%s/%s/%s", cred.Namespace, cred.Type, cred.Name),
 		Version: base64.URLEncoding.EncodeToString(hash.Sum(nil)),
-	}, nil
+	}
 }
